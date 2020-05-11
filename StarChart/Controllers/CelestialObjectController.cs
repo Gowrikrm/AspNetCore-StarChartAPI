@@ -36,7 +36,7 @@ namespace StarChart.Controllers
         public IActionResult GetByName(string name)
         {
             var celestialObjs = _context.CelestialObjects.Where(cd => cd.Name == name).ToList();
-            if(celestialObjs.Count == 0) { return NotFound(); }
+            if (celestialObjs.Count == 0) { return NotFound(); }
             else
             {
                 celestialObjs.ForEach(x => x.Satellites = _context.CelestialObjects.Where(cd => cd.OrbitedObjectId == x.Id).ToList<CelestialObject>());
@@ -50,6 +50,58 @@ namespace StarChart.Controllers
             var celestialObjs = _context.CelestialObjects.Select(x => x).ToList<CelestialObject>();
             celestialObjs.ForEach(x => x.Satellites = _context.CelestialObjects.Where(cd => cd.OrbitedObjectId == x.Id).ToList<CelestialObject>());
             return Ok(celestialObjs);
+        }
+
+        [HttpPost]
+        public IActionResult Create([FromBody]CelestialObject co)
+        {
+            _context.CelestialObjects.Add(co);
+            var result = _context.SaveChanges();
+
+            return CreatedAtRoute("GetById", new { id = co.Id }, co);
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult Update(int id, [FromBody]CelestialObject co)
+        {
+            var dbCO = _context.CelestialObjects.Where(x => x.Id == id).FirstOrDefault();
+            if (dbCO == null) { return NotFound(); }
+            else
+            {
+                dbCO.Name = co.Name;
+                dbCO.OrbitalPeriod = co.OrbitalPeriod;
+                dbCO.OrbitedObjectId = co.OrbitedObjectId;
+                _context.CelestialObjects.Update(dbCO);
+                _context.SaveChanges();
+                return NoContent();
+            }
+        }
+
+        [HttpPatch("{id}/{name}")]
+        public IActionResult RenameObject(int id, string name)
+        {
+            var dbCO = _context.CelestialObjects.Where(x => x.Id == id).FirstOrDefault();
+            if (dbCO == null) { return NotFound(); }
+            else
+            {
+                dbCO.Name = name;
+                _context.CelestialObjects.Update(dbCO);
+                _context.SaveChanges();
+                return NoContent();
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            var dbCO = _context.CelestialObjects.Where(x => x.Id == id).ToList<CelestialObject>();
+            if(dbCO.Count == 0) { return NotFound(); }
+            else
+            {
+                _context.CelestialObjects.RemoveRange(dbCO);
+                _context.SaveChanges();
+                return NoContent();
+            }
         }
     }
 }
